@@ -2,6 +2,11 @@
 Some DSC to be used in my Bicep Deployment to bootstrap a Windows Failover cluster & and SQL with an extension resource.
 
 ```
+//Specifies an encoded IP address. The encodings are semicolon-delimited (;), and follow the format <IP Type>;<address>;<network name>;<subnet mask>. Supported IP types include DHCP, IPV4, and IPV6. 
+
+var VM1FailoverClusterIPAddresses = ['IPv4;${parVirtualMachines[0].privateIPAddress[1]};Cluster Network 1;${modParseCidr[0].outputs.netmask};']
+var VM2FailoverClusterIPAddresses = ['IPv4;${parVirtualMachines[0].privateIPAddress[1]};Cluster Network 1;${modParseCidr[0].outputs.netmask};','IPv4;${parVirtualMachines[1].privateIPAddress[1]};Cluster Network 2;${modParseCidr[1].outputs.netmask};']
+
 @batchSize(1)
 resource resSetupCluster 'Microsoft.Compute/virtualMachines/extensions@2023-09-01' = [
   for (vm,i) in parVirtualMachines: if (parJoinDomain && parSetupCluster) {
@@ -36,7 +41,7 @@ resource resSetupCluster 'Microsoft.Compute/virtualMachines/extensions@2023-09-0
           FailoverClusterIPAddresses: i==0 ? VM1FailoverClusterIPAddresses : VM2FailoverClusterIPAddresses
           SQLInstanceName: parSqlClusterSettings.?InstanceName ?? 'MSSQLSERVER'
           SQLInstanceId: parSqlClusterSettings.?InstanceId ?? 'MSSQLSERVER'
-          SQLSourcePath: parSqlClusterSettings.?SQLSourcePath ?? '\\\\ott-file3.orbcomm.com\\deploy\\MSSQL\\SQLStandard2022'
+          SQLSourcePath: parSqlClusterSettings.?SQLSourcePath ?? '\\\\myfileserver\\Software\\MSSQL\\SQLStandard2022'
           SqlFeatures: parSqlClusterSettings.?SqlFeatures ?? 'SQLENGINE,REPLICATION,FULLTEXT,DQ'
         }
       }
@@ -55,7 +60,7 @@ resource resSetupCluster 'Microsoft.Compute/virtualMachines/extensions@2023-09-0
             userName: parSqlClusterSettings.SQLSvcUserName
             password: parSQLSvcPassword
           }
-		      AgtSvcCredential: {
+          AgtSvcCredential: {
             userName: parSqlClusterSettings.AgtSvcUserName
             password: parAgtSvcPassword
           }
